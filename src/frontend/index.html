@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Android Logcat</title>
+	<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+	<div id="app">
+		<div class="toolbar">
+			<device-selector id="device-selector"></device-selector>
+			<div class="actions">
+				<button id="btn-start">Start</button>
+				<button id="btn-stop" disabled>Stop</button>
+				<button id="btn-clear">Clear</button>
+				<button id="btn-export">Export</button>
+			</div>
+			<div class="filters">
+				<input type="text" id="filter-search" placeholder="Search logs...">
+				<input type="text" id="filter-package" placeholder="Package name...">
+				<select id="filter-level">
+					<option value="all">All Levels</option>
+					<option value="V">Verbose</option>
+					<option value="D">Debug</option>
+					<option value="I">Info</option>
+					<option value="W">Warn</option>
+					<option value="E">Error</option>
+					<option value="F">Fatal</option>
+				</select>
+			</div>
+		</div>
+		<log-list id="log-list"></log-list>
+	</div>
+	<script type="module" src="./main.js"></script>
+</body>
+</html>

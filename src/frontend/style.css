@@ -1,0 +1,105 @@
+:root {
+	--container-padding: 10px;
+	--toolbar-height: 40px;
+	--font-size: 13px;
+	--font-family: var(--vscode-editor-font-family);
+	--bg-color: var(--vscode-editor-background);
+	--fg-color: var(--vscode-editor-foreground);
+	--border-color: var(--vscode-panel-border);
+	--input-bg: var(--vscode-input-background);
+	--input-fg: var(--vscode-input-foreground);
+	--input-border: var(--vscode-input-border);
+	--button-bg: var(--vscode-button-background);
+	--button-fg: var(--vscode-button-foreground);
+	--button-hover: var(--vscode-button-hoverBackground);
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: var(--font-family);
+	background-color: var(--bg-color);
+	color: var(--fg-color);
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+#app {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 8px;
+	border-bottom: 1px solid var(--border-color);
+	align-items: center;
+	background-color: var(--vscode-editor-background);
+}
+
+.actions, .filters {
+	display: flex;
+	gap: 5px;
+}
+
+button {
+	background-color: var(--button-bg);
+	color: var(--button-fg);
+	border: none;
+	padding: 4px 12px;
+	cursor: pointer;
+	font-family: inherit;
+	border-radius: 2px;
+}
+
+button:hover {
+	background-color: var(--button-hover);
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+input, select {
+	background-color: var(--input-bg);
+	color: var(--input-fg);
+	border: 1px solid var(--input-border);
+	padding: 4px;
+	font-family: inherit;
+	border-radius: 2px;
+}
+
+/* Custom Element Placeholders */
+log-list {
+	flex: 1;
+	overflow: auto;
+	display: block;
+	padding: 5px;
+}
+
+device-selector {
+	display: block;
+	min-width: 200px;
+}
+
+/* Log Colors */
+.log-row {
+	font-family: 'Consolas', 'Monaco', monospace;
+	font-size: 12px;
+	white-space: pre-wrap;
+	padding: 2px 4px;
+	border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+}
+
+.log-V { color: var(--vscode-debugTokenExpression-string); }
+.log-D { color: var(--vscode-debugTokenExpression-name); }
+.log-I { color: var(--vscode-debugTokenExpression-value); }
+.log-W { color: var(--vscode-editorWarning-foreground); }
+.log-E { color: var(--vscode-editorError-foreground); }
+.log-F { color: var(--vscode-errorForeground); font-weight: bold; }

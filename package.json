@@ -1,0 +1,57 @@
+{
+	"name": "vsc-logcat",
+	"displayName": "VSC Logcat",
+	"description": "Android Logcat Viewer for VS Code",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [],
+	"main": "./src/backend/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"panel": [
+				{
+					"id": "vsc-logcat-container",
+					"title": "Logcat",
+					"icon": "res/img/activitybar-icon.svg"
+				}
+			]
+		},
+		"views": {
+			"vsc-logcat-container": [
+				{
+					"id": "vsc-logcat-main-view",
+					"type": "webview",
+					"name": "",
+					"contextualTitle": "VSC Logcat",
+					"visibility": "visible",
+					"icon": "res/img/activitybar-icon.svg"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "vsc-logcat.start",
+				"title": "Start Logcat",
+				"category": "VSC Logcat"
+			},
+			{
+				"command": "vsc-logcat.stop",
+				"title": "Stop Logcat",
+				"category": "VSC Logcat"
+			}
+		]
+	},
+	"scripts": {
+		"lint": "eslint ."
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.90.0",
+		"@types/node": "20.x",
+		"eslint": "^8.57.0"
+	}
+}
