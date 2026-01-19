@@ -15,8 +15,8 @@ class ADBService extends EventEmitter {
 					.split('\n').map(l => l.trim()).filter(l => l);
 
 				const devices = lines.map(line => {
-					const { id, model } = line.match(/(^\w+)|(model:\w+)/g);
-					return { id, model, raw: line };
+					const [id, model] = line.match(/(^\w+)|(model:\w+)/g);
+					return { id, model: model.split(':').pop(), raw: line };
 				});
 
 				resolve(devices);
@@ -37,56 +37,72 @@ class ADBService extends EventEmitter {
 		});
 	}
 
-	start({ deviceId, uid, filters }) {
+	async start({ deviceId, packageName, tag, level, search }) {
 		this.stop();
+
+		if (!deviceId) throw new Error('Please connect to a device and make sure it is authorized.');
+		if (!packageName) throw new Error('Package name is required.');
 
 		const args = [
 			'-s', deviceId, // -s: serial number
 			'logcat',
-			uid ? `-u ${uid}` : '',
-			...filters // {tag}:{priority}
+			'--uid', await this.getUID(packageName),
+			`${tag || '*'}:${level}`,
 		]
 		.filter(a => a);
-
-		console.log(`Starting logcat: adb ${args.join(' ')}`);
 
 		this.logcatProcess = spawn('adb', args);
 
 		this.logcatProcess.stdout.on('data', (data) => {
-			const lines = data.split('\n');
+			const lines = data.toString().split('\n');
 			lines.forEach(line => {
 				line = line.trim();
 				if (!line) return;
 
 				// date, invocation time, PID, TID, priority, tag, tag, message
-				// 01-07 18:53:20.285  2882  2882 I SemMdnieManagerService: DisplayListener onDisplayChanged. mAlwaysOnDisplayEnabled : true , mDisplayOn : true , mDisplayState : 2 , mWorkBlueFilter : true , mNightModeBlock : true
+				// sample: 01-07 18:53:20.285  2882  2882 I SemMdnieManagerService: DisplayListener onDisplayChanged. mAlwaysOnDisplayEnabled : true , mDisplayOn : true , mDisplayState : 2 , mWorkBlueFilter : true , mNightModeBlock : true
 				const parts = line.match(/^(\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEF])\s+([^:]+):\s+(.*)$/);
 
-				this.emit('log', {
-					timestamp: parts[1],
-					pid: parts[2],
-					tid: parts[3],
-					priority: parts[4],
-					tag: parts[5],
-					message: parts[6]
+				// if (search && !parts[6].toLowerCase().includes(search.toLowerCase())) return;
+
+				this.emit('adbevent', {
+					type: 'adb.log',
+					data: {
+						timestamp: parts[1],
+						pid: parts[2],
+						tid: parts[3],
+						priority: parts[4],
+						tag: parts[5],
+						message: parts[6]
+					}
 				});
 			});
 		});
 
 		this.logcatProcess.stderr.on('data', (data) => {
 			console.error(`adb stderr: ${data}`);
-			this.emit('error', data);
+			this.emit('adbevent', {
+				type: 'adb.error',
+				data: data
+			});
 		});
 
 		this.logcatProcess.on('close', (code) => {
 			console.log(`adb process exited with code ${code}`);
-			this.emit('closed', code);
+			this.emit('adbevent', {
+				type: 'adb.closed',
+				data: code
+			});
 		});
 	}
 
 	stop() {
 		this.logcatProcess?.kill();
 		this.logcatProcess = null;
+	}
+
+	clear() {
+		exec(`adb logcat -c`);
 	}
 }
 

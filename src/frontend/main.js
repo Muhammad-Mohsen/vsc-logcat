@@ -1,5 +1,5 @@
-import './components/device-selector.js';
-import './components/log-list.js';
+import './logcat/device-selector.js';
+import './logcat/log-list.js';
 
 const vscode = acquireVsCodeApi();
 

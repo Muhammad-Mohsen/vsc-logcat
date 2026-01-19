@@ -10,13 +10,4 @@ function getNonce() {
 	return text;
 }
 
-function sameDir(dir, other) {
-	return path.normalize(dir).toLowerCase() == path.normalize(other).toLowerCase();
-}
-
-function pathExists(absolutePath) {
-	return fs.existsSync(absolutePath.fsPath);
-}
-
-
-module.exports = { getNonce, sameDir, pathExists };
+module.exports = { getNonce };

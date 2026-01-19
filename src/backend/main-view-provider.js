@@ -1,16 +1,22 @@
 const vscode = require('vscode');
 
 const vsc = require('./core/vsc');
-const git = require('./core/git');
 const util = require('./core/utils');
+const AdbService = require('./core/adb-service');
 
 module.exports = class MainViewProvider {
-
-	#view
+	#view;
 	#extensionURI;
+	adb;
 
 	constructor(context) {
 		this.#extensionURI = context.extensionUri;
+		this.adb = new AdbService();
+		this.adb.on('adbevent', (event) => this.#onMessage(event));
+	}
+
+	release() {
+		this.adb.stop();
 	}
 
 	// MESSAGING
@@ -18,14 +24,42 @@ module.exports = class MainViewProvider {
 		try {
 			// event: { type: string, data: any }
 			switch (event.type) {
-				case 'openfolder':
-					vsc.executeCommand('vscode.openFolder');
+				// UI EVENTS
+				case 'start':
+					await this.adb.start(event.data);
+					break;
+				case 'stop':
+					this.adb.stop();
+					break;
+				case 'clear':
+					this.adb.clear();
+					break;
+				case 'devices':
+					this.adb.listDevices()
+						.then(devices => this.#postMessage({ type: 'devices', data: { devices } }))
+						.catch(err => vsc.showErrorPopup(err.message || err));
 					break;
 
+				// ADB EVENTS
+				case 'adb.log':
+					this.#postMessage({ type: 'log', data: { log: event.data } });
+					break;
+
+				case 'adb.closed':
+					vsc.showInfoPopup('Logcat stopped');
+					break;
+
+				case 'adb.error':
+					vsc.showErrorPopup(event.data.toString());
+					this.adb.stop();
+					this.#postMessage({ type: 'stop' });
+					break;
 			}
 
 		} catch (err) {
 			vsc.showErrorPopup(err.message || err);
+			this.adb.stop();
+			this.#postMessage({ type: 'stop' });
 		}
 	}
 	async onContext(message) {
@@ -50,14 +84,14 @@ module.exports = class MainViewProvider {
 			enableScripts: true,
 			localResourceRoots: [this.#extensionURI],
 		}
-		webviewView.webview.html = await this.#render(webviewView.webview);
+		webviewView.webview.html = this.#render(webviewView.webview);
 		webviewView.webview.onDidReceiveMessage((message) => this.#onMessage(message));
 	}
 
 	/** @param {vscode.Webview} webview */
-	async #render(webview) {
+	#render(webview) {
 		const uri = (path) => webview.asWebviewUri(vscode.Uri.joinPath(this.#extensionURI, path));
-		const nonce = util.getNonce(); // Use a nonce to only allow...umm...because they said to use a nonce
+		const nonce = util.getNonce();
 
 		return `
 			<!DOCTYPE html>
@@ -67,25 +101,15 @@ module.exports = class MainViewProvider {
 				<meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource};">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-				<link href="${uri('src/frontend/css/reset.css')}" rel="stylesheet">
-				<link href="${uri('src/frontend/css/vscode.css')}" rel="stylesheet">
-				<link href="${uri('src/frontend/css/iconly.css')}" rel="stylesheet">
-				<link href="${uri('src/frontend/css/seti.css')}" rel="stylesheet">
+				<link href="${uri('src/frontend/style.css')}" rel="stylesheet">
+				<script nonce="${nonce}" src="${uri('src/frontend/core/html-element-base.js')}"></script>
 
-				<link href="${uri('src/frontend/components/toolbar/toolbar.css')}" rel="stylesheet">
-				<link href="${uri('src/frontend/components/welcome/welcome.css')}" rel="stylesheet">
-				<link href="${uri('src/frontend/components/commit-list/commit-list.css')}" rel="stylesheet">
-				<link href="${uri('src/frontend/components/change-list/change-list.css')}" rel="stylesheet">
-
-				<script nonce="${nonce}" type="module" src="${uri('src/frontend/core/html-element-base.js')}"></script>
-				<script nonce="${nonce}" type="module" src="${uri('src/frontend/components/welcome/welcome.js')}"></script>
-				<script nonce="${nonce}" type="module" src="${uri('src/frontend/components/toolbar/toolbar.js')}"></script>
-				<script nonce="${nonce}" type="module" src="${uri('src/frontend/components/commit-list/commit-list.js')}"></script>
-				<script nonce="${nonce}" type="module" src="${uri('src/frontend/components/change-list/change-list.js')}"></script>
-
+				<link href="${uri('src/frontend/logcat/logcat.css')}" rel="stylesheet">
+				<script nonce="${nonce}" src="${uri('src/frontend/logcat/logcat.js')}"></script>
 			</head>
+
 	  		<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
-				<logcat></logcat>
+				<vsc-logcat></vsc-logcat>
 			</body>
 			</html>
 		`;
