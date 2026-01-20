@@ -4,7 +4,7 @@
 - search functionality
 	- scroll to previous/next match
 	- highlight matches
-- optimization (css containment)
+- DONE - optimization (css containment)
 - publishing
-	- extension icon
+	- DONE - extension icon
 	- marketplace listing

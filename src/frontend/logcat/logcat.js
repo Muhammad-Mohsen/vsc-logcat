@@ -2,6 +2,9 @@ class Logcat extends HTMLElementBase {
 	autoScroll = true;
 	isPlaying = false;
 
+	BUFFER_SIZE = 50000;
+	buffer = [];
+
 	connectedCallback() {
 		super.render(this.render());
 
@@ -64,11 +67,18 @@ class Logcat extends HTMLElementBase {
 	renderLogEntry(log) {
 		this.logList.insertAdjacentHTML('beforeend', `
 			<entry class="${log.priority}">
-				<tag>${log.tag}</tag>
 				<timestamp>${log.timestamp}</timestamp>
+				<tag>${log.tag}</tag>
 				<message>${log.message}</message>
 			</entry>
 		`);
+	}
+
+	// FIND
+	find(dir) {
+		const q = this.searchInput.value;
+		// string, caseSensitive, backwards, wrapAround, wholeWord, searchInFrames, showDialog
+		window.find(q, false, dir == 'prev', true, false, false);
 	}
 
 	toggleLoading(force) {
@@ -79,26 +89,33 @@ class Logcat extends HTMLElementBase {
 		return `
 			<loading id="loading-bar" class="progress" style="display: none;"></loading>
 			<toolbar>
-				<select id="device-select" onchange="${this.handle}.onDeviceChanged(this.value)">
-					<option value="">Select a device...</option>
-				</select>
-				<button class="ic refresh" title="Refresh Device List" onclick="${this.handle}.refreshDevices()"></button>
+				<div class="inline">
+					<select id="device-select" onchange="${this.handle}.onDeviceChanged(this.value)">
+						<option value="">Select a device...</option>
+					</select>
+					<button class="ic refresh" title="Refresh Device List" onclick="${this.handle}.refreshDevices()"></button>
+				</div>
 
-				<input type="text" id="package-input" onchange="${this.handle}.onPackageNameChanged(this.value)" placeholder="Package Name">
+				<input type="text" id="package-input" class="inline" onchange="${this.handle}.onPackageNameChanged(this.value)" placeholder="Package Name">
 
-				<input type="text" id="tag-input" onchange="${this.handle}.onTagChanged(this.value)" placeholder="Tag">
-				<select id="level-select" onchange="${this.handle}.onLevelChanged(this.value)">
-					<option value="V">Verbose</option>
-					<option value="D" selected>Debug</option>
-					<option value="I">Info</option>
-					<option value="W">Warning</option>
-					<option value="E">Error</option>
-					<option value="F">Fatal</option>
-				</select>
+				<div class="inline">
+					<input type="text" id="tag-input" onchange="${this.handle}.onTagChanged(this.value)" placeholder="Tag">
+					<select id="level-select" onchange="${this.handle}.onLevelChanged(this.value)">
+						<option value="V">Verbose</option>
+						<option value="D" selected>Debug</option>
+						<option value="I">Info</option>
+						<option value="W">Warning</option>
+						<option value="E">Error</option>
+						<option value="F">Fatal</option>
+					</select>
+				</div>
 
-				<input type="search" id="search-input" onchange="${this.handle}.onSearchChanged(this.value)" placeholder="Search">
-				<button class="ic arrow-up" title="Previous" onclick="${this.handle}.findPrevious()"></button>
-				<button class="ic arrow-up flip" title="Next" onclick="${this.handle}.findNext()"></button>
+				<div class="inline" style="margin-left: auto;">
+					<input type="search" id="search-input" onsearch="${this.handle}.find('next')" placeholder="Search">
+					<span id="search-matches">0 of 0</span>
+					<button class="ic arrow-down flip" title="Previous" onclick="${this.handle}.find('prev')"></button>
+					<button class="ic arrow-down" title="Next" onclick="${this.handle}.find('next')"></button>
+				</div>
 
 				<button id="play-stop-button" class="ic play" title="Start" onclick="${this.handle}.startStop()"></button>
 				<button class="ic clear" title="Clear" onclick="${this.handle}.clear()"></button>
