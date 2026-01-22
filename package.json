@@ -1,8 +1,13 @@
 {
 	"name": "vsc-logcat",
 	"displayName": "VSC Logcat",
+	"icon": "res/icon.png",
 	"description": "Android Logcat Viewer for VS Code",
-	"version": "0.0.1",
+	"version": "1.0.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Muhammad-Mohsen/vsc-logcat.git"
+	},
 	"engines": {
 		"vscode": "^1.90.0"
 	},
@@ -17,7 +22,7 @@
 				{
 					"id": "vsc-logcat-container",
 					"title": "Logcat",
-					"icon": "res/img/activitybar-icon.svg"
+					"icon": ""
 				}
 			]
 		},
@@ -29,22 +34,10 @@
 					"name": "",
 					"contextualTitle": "VSC Logcat",
 					"visibility": "visible",
-					"icon": "res/img/activitybar-icon.svg"
+					"icon": ""
 				}
 			]
-		},
-		"commands": [
-			{
-				"command": "vsc-logcat.start",
-				"title": "Start Logcat",
-				"category": "VSC Logcat"
-			},
-			{
-				"command": "vsc-logcat.stop",
-				"title": "Stop Logcat",
-				"category": "VSC Logcat"
-			}
-		]
+		}
 	},
 	"scripts": {
 		"lint": "eslint ."

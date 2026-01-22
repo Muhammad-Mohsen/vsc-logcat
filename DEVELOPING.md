@@ -7,4 +7,5 @@
 - DONE - optimization (css containment)
 - publishing
 	- DONE - extension icon
+	- DONE - screenshots
 	- marketplace listing
