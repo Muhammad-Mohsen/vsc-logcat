@@ -14,7 +14,11 @@ vsc-logcat {
 			background: var(--input-bg);
 
 			> * { flex-shrink: 0; border-radius: 0; }
-			> :is(input, select) { flex-grow: 1; width: fit-content; }
+			> :is(input, select) {
+				flex: 1 1 auto;
+				width: fit-content;
+				min-width: 0;
+			}
 			> *:first-child { border-radius: 2px 0 0 2px; }
 			> *:last-child { border-radius: 0 2px 2px 0; }
 		}
@@ -38,7 +42,8 @@ vsc-logcat {
 
 		#device-select { min-width: 180px; }
 
-		#search-matches { padding-inline: 4px; opacity: .6; }
+		#search-matches { padding-inline: 4px; opacity: .7; }
+		[disabled] { opacity: .3; }
 	}
 
 	/* LOGS */
@@ -62,6 +67,8 @@ vsc-logcat {
 			&.W { border-color: #ffb4467a; }
 			&.E { background: #ff3d007a; font-weight: bold; }
 			&.F { background: #ff3d007a; font-weight: bold; }
+
+			&.active-match { background-color: var(--button-secondary-hover); }
 
 			tag {
 				margin-left: 4px;

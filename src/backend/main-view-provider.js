@@ -33,6 +33,7 @@ module.exports = class MainViewProvider {
 					break;
 				case 'clear':
 					this.adb.clear();
+					vsc.showInfoPopup('Logcat cleared');
 					break;
 				case 'devices':
 					this.adb.listDevices()

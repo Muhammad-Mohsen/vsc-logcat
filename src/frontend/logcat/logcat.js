@@ -1,9 +1,14 @@
 class Logcat extends HTMLElementBase {
+	BUFFER_SIZE = 50000;
+	CLEAR_COUNT = 10000;
+	buffer = [];
+
+	matches = [];
+	currentMatch = -1;
+	query = '';
+
 	autoScroll = true;
 	isPlaying = false;
-
-	BUFFER_SIZE = 50000;
-	buffer = [];
 
 	connectedCallback() {
 		super.render(this.render());
@@ -11,6 +16,8 @@ class Logcat extends HTMLElementBase {
 		this.logList.onscroll = () => {
 			this.autoScroll = (this.logList.scrollTop + this.logList.clientHeight) >= this.logList.scrollHeight;
 		};
+
+		this.refreshDevices();
 	}
 
 	onMessage(event) {
@@ -49,6 +56,8 @@ class Logcat extends HTMLElementBase {
 	}
 	clear() {
 		this.logList.innerHTML = '';
+		this.buffer = [];
+		this.clearSearch();
 		this.postMessage({ type: 'clear' });
 	}
 
@@ -65,6 +74,10 @@ class Logcat extends HTMLElementBase {
 
 	// LOGS
 	renderLogEntry(log) {
+		log.text = `${log.timestamp} ${log.tag} ${log.message}`.toLowerCase();
+
+		this.buffer.push(log);
+
 		this.logList.insertAdjacentHTML('beforeend', `
 			<entry class="${log.priority}">
 				<timestamp>${log.timestamp}</timestamp>
@@ -72,13 +85,98 @@ class Logcat extends HTMLElementBase {
 				<message>${log.message}</message>
 			</entry>
 		`);
+
+		// Check if new log matches current search
+		if (this.matchesQuery(log)) {
+			this.matches.push(this.buffer.length - 1);
+			this.updateSearchUI();
+		}
+
+		this.updateBuffer();
+
+		if (this.autoScroll) this.logList.scrollTop = this.logList.scrollHeight;
 	}
 
-	// FIND
-	find(dir) {
-		const q = this.searchInput.value;
-		// string, caseSensitive, backwards, wrapAround, wholeWord, searchInFrames, showDialog
-		window.find(q, false, dir == 'prev', true, false, false);
+	// SEARCH
+	search(dir) {
+		const q = this.searchInput.value.toLowerCase();
+		if (!q) return this.clearSearch();
+
+		// New Search
+		if (q != this.query) {
+			this.query = q;
+			this.matches = [];
+			this.buffer.forEach((log, index) => {
+				if (this.matchesQuery(log, q)) this.matches.push(index);
+			});
+
+			this.currentMatch = -1;
+		}
+
+		if (this.matches.length == 0) return this.updateSearchUI();
+
+		if (dir == 'next') {
+			this.currentMatch++;
+			if (this.currentMatch >= this.matches.length) this.currentMatch = 0; // Wrap around
+		}
+		else {
+			this.currentMatch--;
+			if (this.currentMatch < 0) this.currentMatch = this.matches.length - 1; // Wrap around
+		}
+
+		this.scrollToMatch(this.matches[this.currentMatch]);
+		this.updateSearchUI();
+	}
+	clearSearch() {
+		this.matches = [];
+		this.currentMatch = -1;
+		this.query = '';
+		this.updateSearchUI();
+		this.logList.querySelectorAll('.active-match').forEach(el => el.classList.remove('active-match'));
+	}
+
+	matchesQuery(log, query) {
+		return log.text.includes(query.toLowerCase());
+	}
+
+	scrollToMatch(bufferIndex) {
+		const match = this.logList.children[bufferIndex];
+		if (!match) return;
+
+		// Highlight
+		this.logList.querySelector('.active-match')?.classList?.remove('active-match');
+
+		match.classList.add('active-match');
+		match.scrollIntoView({ block: 'center' });
+	}
+
+	updateSearchUI() {
+		const total = this.matches.length;
+		const current = this.currentMatch >= 0 ? this.currentMatch + 1 : 0;
+		this.searchMatches.textContent = !total ? 'Nada!' : `${current} of ${total}`;
+		this.prevButton.disabled = this.nextButton.disabled = !total;
+	}
+
+	// BUFFER
+	updateBuffer() {
+		if (this.buffer.length <= this.BUFFER_SIZE) return;
+
+		this.buffer.splice(0, this.CLEAR_COUNT);
+
+		// Update match indices
+		const originalMatchesCount = this.matches.length;
+		this.matches = this.matches
+			.map(idx => idx - this.CLEAR_COUNT)
+			.filter(idx => idx >= 0);
+
+		if (this.currentMatch >= 0) {
+			const removedMatchesCount = originalMatchesCount - this.matches.length;
+			this.currentMatch -= removedMatchesCount;
+			if (this.currentMatch < 0) this.currentMatch = -1; // current match was removed
+		}
+
+		this.updateSearchUI();
+		for (let i = 0; i < this.CLEAR_COUNT; i++) this.logList.firstElementChild?.remove();
 	}
 
 	toggleLoading(force) {
@@ -111,10 +209,10 @@ class Logcat extends HTMLElementBase {
 				</div>
 
 				<div class="inline" style="margin-left: auto;">
-					<input type="search" id="search-input" onsearch="${this.handle}.find('next')" placeholder="Search">
-					<span id="search-matches">0 of 0</span>
-					<button class="ic arrow-down flip" title="Previous" onclick="${this.handle}.find('prev')"></button>
-					<button class="ic arrow-down" title="Next" onclick="${this.handle}.find('next')"></button>
+					<input type="search" id="search-input" onsearch="${this.handle}.search('next')" placeholder="Search">
+					<span id="search-matches"></span>
+					<button id="prev-button" class="ic arrow-down flip" disabled title="Previous" onclick="${this.handle}.search('prev')"></button>
+					<button id="next-button" class="ic arrow-down" disabled title="Next" onclick="${this.handle}.search('next')"></button>
 				</div>
 
 				<button id="play-stop-button" class="ic play" title="Start" onclick="${this.handle}.startStop()"></button>
