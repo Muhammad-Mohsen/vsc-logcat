@@ -8,6 +8,8 @@
 		"type": "git",
 		"url": "https://github.com/Muhammad-Mohsen/vsc-logcat.git"
 	},
+	"publisher": "muhammadmohsen",
+	"author": "Muhammad Mohsen <muhammadaeh@gmail.com>",
 	"engines": {
 		"vscode": "^1.90.0"
 	},
